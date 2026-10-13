@@ -8,7 +8,31 @@ services:
     dockerContext: .
     healthCheckPath: /api/health
     envVars:
-      - key: PORT
-        value: 8080
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        sync: false
+      - key: MYSQL_DATABASE
+        sync: false
+      - key: MYSQL_SSL_MODE
+        value: REQUIRED
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: onboarding@resend.dev
+      - key: EMAIL_FROM_NAME
+        value: Student Performance Dashboard

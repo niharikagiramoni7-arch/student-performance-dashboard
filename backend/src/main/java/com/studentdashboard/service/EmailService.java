@@ -78,15 +78,14 @@ public class EmailService {
         String recipient = toEmail.trim().toLowerCase();
         log.info(">> [OTP NOTIFICATION DISPATCH] Recipient: {}", recipient);
 
-        // 1. If Brevo is configured, use Brevo as primary (delivers to ALL email addresses dynamically without domain restrictions)
-        if (isBrevoConfigured()) {
-            sendViaBrevoApi(recipient, otp);
+        // Use Resend as the primary provider when both services are configured.
+        if (isResendConfigured()) {
+            sendViaResendApi(recipient, otp);
             return;
         }
 
-        // 2. If Resend is configured, use Resend
-        if (isResendConfigured()) {
-            sendViaResendApi(recipient, otp);
+        if (isBrevoConfigured()) {
+            sendViaBrevoApi(recipient, otp);
             return;
         }
 
