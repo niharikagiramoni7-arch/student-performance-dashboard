@@ -56,10 +56,10 @@ public class DataSourceConfig {
                     .password(mysqlPassword)
                     .build();
         } else {
-            log.info("Initializing H2 in-file database with MySQL compatibility mode...");
+            log.info("Initializing in-memory H2 database with MySQL compatibility mode...");
             return DataSourceBuilder.create()
                     .driverClassName("org.h2.Driver")
-                    .url("jdbc:h2:file:./data/student_performance_db;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH")
+                    .url("jdbc:h2:mem:student_performance_db;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH")
                     .username("sa")
                     .password("")
                     .build();
