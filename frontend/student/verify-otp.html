@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Institutional Email Verification - Student Performance Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-wrapper">
+
+  <div class="auth-card" style="max-width: 480px;">
+    <div class="auth-header">
+      <div class="auth-logo">✉️</div>
+      <h1 class="auth-title">Verify Your Institutional Account</h1>
+      <p class="auth-subtitle">
+        Enter the 6-digit verification code for:<br>
+        <strong id="display-email" style="color: var(--primary); font-size: 1rem;">your email</strong>
+      </p>
+    </div>
+
+    <!-- Email Input (If not passed via URL or session) -->
+    <div id="email-prompt-box" style="display: none; background: var(--bg-surface-2); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+      <label class="form-label" for="manual-email" style="font-size: 0.85rem;">Enter Your Registered Email:</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="email" id="manual-email" class="form-control" placeholder="user@university.edu or user@gmail.com" style="font-size: 0.9rem;">
+        <button type="button" id="lookup-email-btn" class="btn btn-primary btn-sm" style="white-space: nowrap;">
+          Send Code ✉️
+        </button>
+      </div>
+    </div>
+
+    <div id="otp-alert" class="alert alert-danger" style="display: none;"></div>
+    <div id="otp-info" class="alert alert-info" style="display: none;"></div>
+
+    <form id="otp-form">
+      <!-- Secure OTP Info Card -->
+      <div id="otp-info-card" style="background: #f0fdf4; border: 1px solid #86efac; border-radius: var(--radius-md); padding: 1.1rem; margin-bottom: 1.25rem; text-align: center; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.08);">
+        <div style="font-size: 1.6rem; margin-bottom: 4px;">✉️</div>
+        <div style="font-size: 0.9rem; font-weight: 700; color: #166534; margin-bottom: 4px;">
+          Verification Code Dispatched
+        </div>
+        <div style="font-size: 0.8rem; color: #15803d; line-height: 1.4;">
+          A 6-digit security code has been sent to:<br>
+          <strong id="otp-dest-email" style="color: #0f172a; word-break: break-all;">your registered email</strong>
+        </div>
+        <div style="font-size: 0.75rem; color: #64748b; margin-top: 8px;">
+          Please check your email inbox (and spam folder) and enter the code below:
+        </div>
+      </div>
+
+      <div class="form-group" style="text-align: center;">
+        <label class="form-label" for="otp">Enter 6-Digit Code</label>
+        <input type="text" id="otp" class="form-control" maxlength="6" pattern="[0-9]{6}" placeholder="------"
+               style="font-size: 2.2rem; font-weight: 800; letter-spacing: 14px; text-align: center; height: 68px;" required autofocus>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Code expires in 5 minutes</div>
+      </div>
+
+      <button type="submit" id="verify-btn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700;">
+        Verify Code & Activate Account ✅
+      </button>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; font-size: 0.85rem;">
+        <span id="countdown-text" style="color: var(--text-muted);">Didn't receive code?</span>
+        <button type="button" id="resend-btn" class="btn btn-secondary btn-sm">
+          🔄 Resend Code
+        </button>
+      </div>
+
+      <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+        <a href="login.html" id="back-login-link" style="font-size: 0.85rem; color: var(--primary); font-weight: 600;">Go to Login</a>
+        <span style="color: var(--text-muted); margin: 0 8px;">•</span>
+        <a href="register.html" style="font-size: 0.85rem; color: var(--text-muted);">Register Again</a>
+      </div>
+    </form>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    let email = urlParams.get('email') || sessionStorage.getItem('spd_pending_email') || '';
+    let userRole = urlParams.get('role') || sessionStorage.getItem('spd_pending_role') || 'ROLE_STUDENT';
+
+    // Clear any potential raw OTP in session
+    sessionStorage.removeItem('spd_pending_otp');
+
+    const displayEmail = document.getElementById('display-email');
+    const otpDestEmail = document.getElementById('otp-dest-email');
+    const emailPromptBox = document.getElementById('email-prompt-box');
+    const manualEmailInput = document.getElementById('manual-email');
+    const lookupEmailBtn = document.getElementById('lookup-email-btn');
+    const backLoginLink = document.getElementById('back-login-link');
+
+    const otpAlert = document.getElementById('otp-alert');
+    const otpInfo = document.getElementById('otp-info');
+    const otpInput = document.getElementById('otp');
+    const verifyBtn = document.getElementById('verify-btn');
+    const resendBtn = document.getElementById('resend-btn');
+
+    let cooldownTimer = null;
+
+    function getTargetLoginUrl() {
+      if (userRole === 'ROLE_ADMIN') return '../admin/login.html';
+      if (userRole === 'ROLE_FACULTY') return '../faculty/login.html';
+      return 'login.html';
+    }
+
+    backLoginLink.href = getTargetLoginUrl();
+
+    function startResendCooldown(seconds = 60) {
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      let remaining = seconds;
+      resendBtn.disabled = true;
+      resendBtn.style.opacity = '0.6';
+      resendBtn.style.cursor = 'not-allowed';
+      resendBtn.textContent = `⏳ Resend (${remaining}s)`;
+
+      cooldownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(cooldownTimer);
+          cooldownTimer = null;
+          resendBtn.disabled = false;
+          resendBtn.style.opacity = '1';
+          resendBtn.style.cursor = 'pointer';
+          resendBtn.textContent = '🔄 Resend Code';
+        } else {
+          resendBtn.textContent = `⏳ Resend (${remaining}s)`;
+        }
+      }, 1000);
+    }
+
+    // Initialize display
+    if (email) {
+      displayEmail.textContent = email;
+      otpDestEmail.textContent = email;
+      sessionStorage.setItem('spd_pending_email', email);
+      startResendCooldown(60);
+    } else {
+      displayEmail.textContent = 'your registered email address';
+      otpDestEmail.textContent = 'your registered email address';
+      emailPromptBox.style.display = 'block';
+      manualEmailInput.focus();
+    }
+
+    lookupEmailBtn.addEventListener('click', async () => {
+      const val = manualEmailInput.value.trim();
+      if (!val) {
+        showToast('Please enter your email address.', 'warning');
+        return;
+      }
+      email = val;
+      displayEmail.textContent = email;
+      otpDestEmail.textContent = email;
+      sessionStorage.setItem('spd_pending_email', email);
+      
+      try {
+        lookupEmailBtn.disabled = true;
+        lookupEmailBtn.textContent = 'Sending...';
+        await api.post('/auth/resend-otp', { email });
+        showToast('Verification code dispatched to ' + email, 'success');
+        startResendCooldown(60);
+      } catch (err) {
+        showToast(err.message || 'Failed to dispatch code', 'error');
+        otpAlert.textContent = err.message || 'Failed to dispatch code.';
+        otpAlert.style.display = 'flex';
+      } finally {
+        lookupEmailBtn.disabled = false;
+        lookupEmailBtn.textContent = 'Send Code ✉️';
+      }
+    });
+
+    // Auto-focus and filter digits
+    otpInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+
+    // Form submit
+    document.getElementById('otp-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      otpAlert.style.display = 'none';
+
+      if (!email) {
+        otpAlert.textContent = 'Please enter your registered email address above first.';
+        otpAlert.style.display = 'flex';
+        emailPromptBox.style.display = 'block';
+        return;
+      }
+
+      const otp = otpInput.value.trim();
+      if (otp.length !== 6) {
+        otpAlert.textContent = 'Please enter a complete 6-digit code.';
+        otpAlert.style.display = 'flex';
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Verifying...';
+
+      try {
+        const resp = await api.post('/auth/verify-otp', { email, otp });
+        if (cooldownTimer) clearInterval(cooldownTimer);
+        sessionStorage.removeItem('spd_pending_otp');
+        showToast(resp.message || 'Email verified successfully!', 'success');
+
+        setTimeout(() => {
+          window.location.href = getTargetLoginUrl();
+        }, 1200);
+      } catch (err) {
+        otpAlert.textContent = err.message || 'Verification failed. Please check the OTP.';
+        otpAlert.style.display = 'flex';
+        showToast(err.message, 'error');
+      } finally {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify Code & Activate Account ✅';
+      }
+    });
+
+    // Resend OTP
+    resendBtn.addEventListener('click', async () => {
+      if (resendBtn.disabled) return;
+      if (!email) {
+        showToast('Please enter your email address first.', 'warning');
+        emailPromptBox.style.display = 'block';
+        manualEmailInput.focus();
+        return;
+      }
+
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'Sending...';
+
+      try {
+        const resp = await api.post('/auth/resend-otp', { email });
+        showToast('A fresh OTP has been sent to ' + email, 'success');
+        startResendCooldown(60);
+      } catch (err) {
+        showToast(err.message || 'Failed to resend OTP', 'error');
+        otpAlert.textContent = err.message || 'Failed to resend OTP.';
+        otpAlert.style.display = 'flex';
+        resendBtn.disabled = false;
+        resendBtn.textContent = '🔄 Resend Code';
+      }
+    });
+  </script>
+
+</body>
+</html>

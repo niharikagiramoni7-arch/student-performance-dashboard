@@ -1,0 +1,6 @@
+{
+  "name": "Student Performance Dashboard",
+  "description": "The Student Performance Dashboard helps students, faculty, and administrators monitor academic performance. It displays attendance, marks, assignments, CGPA, and progress through charts and reports, enabling students to identify strengths and areas for improvement.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

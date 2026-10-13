@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Login - Student Performance Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-wrapper">
+
+  <div class="auth-card" style="max-width: 480px;">
+    <div class="auth-header">
+      <div class="auth-logo">👨‍🏫</div>
+      <h1 class="auth-title" id="page-title">Faculty Portal Login</h1>
+      <p class="auth-subtitle" id="page-subtitle">Manage student academic records, marks, and attendance</p>
+    </div>
+
+    <div id="login-alert" class="alert alert-danger" style="display: none;"></div>
+    <div id="login-info" class="alert alert-info" style="display: none;"></div>
+
+    <!-- STEP 1: FACULTY CREDENTIALS -->
+    <form id="faculty-login-form">
+      <div class="form-group">
+        <label class="form-label" for="email">Faculty Email Address *</label>
+        <input type="email" id="email" class="form-control" placeholder="e.g. your.faculty@example.com" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <label class="form-label" for="password">Password *</label>
+          <a href="#" id="forgot-password-link" style="font-size: 0.75rem; color: var(--primary);">Forgot Password?</a>
+        </div>
+        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+        Next: Verify with OTP ➡️
+      </button>
+
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
+        Don't have an account yet?
+        <a href="../student/register.html?role=ROLE_FACULTY" style="font-weight: 700; color: var(--secondary);">Register here</a>
+      </div>
+
+      <div style="margin-top: 1.25rem; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+        <a href="../role-selection.html" style="font-size: 0.85rem; color: var(--text-muted);">⬅️ Choose Different Role</a>
+      </div>
+    </form>
+
+    <!-- STEP 2: FACULTY OTP VERIFICATION -->
+    <form id="otp-verify-form" style="display: none;">
+      <div id="otp-info-card" style="background: #f0fdf4; border: 1px solid #86efac; border-radius: var(--radius-md); padding: 1.1rem; margin-bottom: 1.25rem; text-align: center; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.08);">
+        <div style="font-size: 1.6rem; margin-bottom: 4px;">✉️</div>
+        <div style="font-size: 0.9rem; font-weight: 700; color: #166534; margin-bottom: 4px;">
+          Verification Code Dispatched
+        </div>
+        <div style="font-size: 0.8rem; color: #15803d; line-height: 1.4;">
+          A 6-digit security code has been sent to:<br>
+          <strong id="otp-dest-email" style="color: #0f172a; word-break: break-all;">your.faculty@example.com</strong>
+        </div>
+        <div style="font-size: 0.75rem; color: #64748b; margin-top: 8px;">
+          Please check your email inbox (and spam folder) and enter the code below:
+        </div>
+      </div>
+
+      <div class="form-group" style="text-align: center;">
+        <label class="form-label" for="otp-input">Enter 6-Digit Code</label>
+        <input type="text" id="otp-input" class="form-control" maxlength="6" pattern="[0-9]{6}" placeholder="------"
+               style="font-size: 2rem; font-weight: 800; letter-spacing: 12px; text-align: center; height: 64px;" required>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">Code expires in 5 minutes</div>
+      </div>
+
+      <button type="submit" id="verify-submit-btn" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; font-weight: 700;">
+        Verify Code & Access Faculty Portal ✅
+      </button>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; font-size: 0.85rem;">
+        <button type="button" id="back-to-login-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; text-decoration: underline;">
+          ⬅️ Back to Password
+        </button>
+        <button type="button" id="resend-otp-btn" class="btn btn-secondary btn-sm">
+          🔄 Resend OTP
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    const loginForm = document.getElementById('faculty-login-form');
+    const otpForm = document.getElementById('otp-verify-form');
+    const alertBox = document.getElementById('login-alert');
+    const infoBox = document.getElementById('login-info');
+    const submitBtn = document.getElementById('submit-btn');
+    const verifySubmitBtn = document.getElementById('verify-submit-btn');
+    const resendBtn = document.getElementById('resend-otp-btn');
+    const backBtn = document.getElementById('back-to-login-btn');
+    const otpInput = document.getElementById('otp-input');
+    const otpDestEmail = document.getElementById('otp-dest-email');
+
+    let currentEmail = '';
+    let cooldownTimer = null;
+
+    function startResendCooldown(seconds = 60) {
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      let remaining = seconds;
+      resendBtn.disabled = true;
+      resendBtn.style.opacity = '0.6';
+      resendBtn.style.cursor = 'not-allowed';
+      resendBtn.textContent = `⏳ Resend (${remaining}s)`;
+
+      cooldownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(cooldownTimer);
+          cooldownTimer = null;
+          resendBtn.disabled = false;
+          resendBtn.style.opacity = '1';
+          resendBtn.style.cursor = 'pointer';
+          resendBtn.textContent = '🔄 Resend OTP';
+        } else {
+          resendBtn.textContent = `⏳ Resend (${remaining}s)`;
+        }
+      }, 1000);
+    }
+
+    document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      showToast('Please contact the campus system administrator to reset your faculty credentials.', 'info');
+    });
+
+    // STEP 1: Validate credentials & request OTP
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.style.display = 'none';
+      infoBox.style.display = 'none';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      currentEmail = email;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying credentials...';
+
+      try {
+        const resp = await api.post('/auth/login', {
+          email,
+          password,
+          role: 'ROLE_FACULTY'
+        });
+
+        if (resp.requiresOtp) {
+          document.getElementById('page-title').textContent = 'Faculty 2FA Verification';
+          document.getElementById('page-subtitle').textContent = 'Step 2: Enter 6-digit OTP code to continue';
+          otpDestEmail.textContent = email;
+          sessionStorage.setItem('spd_pending_email', email);
+          sessionStorage.removeItem('spd_pending_otp');
+
+          loginForm.style.display = 'none';
+          otpForm.style.display = 'block';
+          otpInput.value = '';
+          otpInput.focus();
+
+          startResendCooldown(60);
+          showToast('Verification code dispatched to ' + email, 'info');
+        } else if (resp.token) {
+          auth.saveSession(resp);
+          showToast('Welcome, ' + resp.fullName + '!', 'success');
+          setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+        }
+      } catch (err) {
+        alertBox.textContent = err.message || 'Login failed. Please check your credentials.';
+        alertBox.style.display = 'flex';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Next: Verify with OTP ➡️';
+      }
+    });
+
+    // STEP 2: Verify OTP
+    otpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.style.display = 'none';
+
+      const otp = otpInput.value.trim();
+      if (otp.length !== 6) {
+        alertBox.textContent = 'Please enter a valid 6-digit OTP.';
+        alertBox.style.display = 'flex';
+        return;
+      }
+
+      verifySubmitBtn.disabled = true;
+      verifySubmitBtn.textContent = 'Verifying code...';
+
+      try {
+        const resp = await api.post('/auth/verify-login-otp', {
+          email: currentEmail,
+          otp,
+          role: 'ROLE_FACULTY'
+        });
+
+        if (cooldownTimer) clearInterval(cooldownTimer);
+        auth.saveSession(resp);
+        showToast('Two-factor verification successful! Entering faculty portal...', 'success');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 600);
+      } catch (err) {
+        alertBox.textContent = err.message || 'Verification failed. Please check the code.';
+        alertBox.style.display = 'flex';
+      } finally {
+        verifySubmitBtn.disabled = false;
+        verifySubmitBtn.textContent = 'Verify Code & Access Faculty Portal ✅';
+      }
+    });
+
+    // Resend OTP
+    resendBtn.addEventListener('click', async () => {
+      if (resendBtn.disabled) return;
+      try {
+        resendBtn.disabled = true;
+        resendBtn.textContent = 'Sending...';
+        await api.post('/auth/resend-otp', { email: currentEmail });
+        showToast('A fresh OTP has been sent to ' + currentEmail, 'success');
+        startResendCooldown(60);
+      } catch (err) {
+        showToast('Resend failed: ' + err.message, 'error');
+        alertBox.textContent = err.message || 'Failed to resend OTP.';
+        alertBox.style.display = 'flex';
+        resendBtn.disabled = false;
+        resendBtn.textContent = '🔄 Resend OTP';
+      }
+    });
+
+    // Back button
+    backBtn.addEventListener('click', () => {
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      otpForm.style.display = 'none';
+      loginForm.style.display = 'block';
+      document.getElementById('page-title').textContent = 'Faculty Portal Login';
+      document.getElementById('page-subtitle').textContent = 'Manage student academic records, marks, and attendance';
+      alertBox.style.display = 'none';
+    });
+  </script>
+
+</body>
+</html>

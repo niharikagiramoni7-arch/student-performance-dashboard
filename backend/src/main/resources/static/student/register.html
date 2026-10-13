@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Registration - Student Performance Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-wrapper" style="padding: 2.5rem 1rem;">
+
+  <div class="auth-card" style="max-width: 600px;">
+    <div class="auth-header" style="margin-bottom: 1.5rem;">
+      <div class="auth-logo">📝</div>
+      <h1 class="auth-title" id="form-heading">Institutional Registration</h1>
+      <p class="auth-subtitle">Create an official student profile with email OTP verification</p>
+    </div>
+
+    <div id="register-alert" class="alert alert-danger" style="display: none;"></div>
+    <div id="register-info" class="alert alert-info" style="display: none;"></div>
+
+    <form id="register-form">
+      <!-- Role Selection -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label class="form-label" for="userRole">Registering As *</label>
+        <select id="userRole" class="form-select" style="font-weight: 600;" required>
+          <option value="ROLE_STUDENT" selected>🧑‍🎓 Student</option>
+          <option value="ROLE_FACULTY">👨‍🏫 Faculty Member</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="fullName">Full Name *</label>
+          <input type="text" id="fullName" class="form-control" placeholder="e.g. Full Name" required>
+        </div>
+        <div class="form-group" id="id-group">
+          <label class="form-label" id="id-label" for="idNumber">Student ID (begins with 70572400xxx) *</label>
+          <input type="text" id="idNumber" class="form-control" placeholder="e.g. 70572400001" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address *</label>
+          <input type="email" id="email" class="form-control" placeholder="e.g. your.email@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number</label>
+          <input type="text" id="phone" class="form-control" placeholder="+91 9876543210">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="department">Department *</label>
+          <select id="department" class="form-select" required>
+            <option value="">-- Select Department --</option>
+            <option value="Computer Science & Engineering" selected>Computer Science & Engineering</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+          </select>
+        </div>
+        <div class="form-group" id="year-group">
+          <label class="form-label" for="year">Year of Study *</label>
+          <select id="year" class="form-select">
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3" selected>3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+        </div>
+        <div class="form-group" id="section-group">
+          <label class="form-label" for="section">Section *</label>
+          <select id="section" class="form-select">
+            <option value="A" selected>Section A</option>
+            <option value="B">Section B</option>
+            <option value="C">Section C</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="password">Password (min 6 chars) *</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm Password *</label>
+          <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required minlength="6">
+        </div>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; padding: 0.75rem;">
+        Complete Registration & Request OTP ➡️
+      </button>
+
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
+        Already have an account?
+        <a href="login.html" id="login-link" style="font-weight: 700; color: var(--primary);">Login here</a>
+      </div>
+
+      <div style="margin-top: 1.25rem; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+        <a href="../role-selection.html" style="font-size: 0.8rem; color: var(--text-muted);">⬅️ Choose Different Role / Portal</a>
+      </div>
+    </form>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const roleSelect = document.getElementById('userRole');
+    const idLabel = document.getElementById('id-label');
+    const idInput = document.getElementById('idNumber');
+    const yearGroup = document.getElementById('year-group');
+    const sectionGroup = document.getElementById('section-group');
+    const loginLink = document.getElementById('login-link');
+    const form = document.getElementById('register-form');
+    const alertBox = document.getElementById('register-alert');
+    const submitBtn = document.getElementById('submit-btn');
+
+    // Adapt fields to selected role
+    roleSelect.addEventListener('change', () => {
+      const role = roleSelect.value;
+      if (role === 'ROLE_STUDENT') {
+        idLabel.textContent = 'Student ID (begins with 70572400xxx) *';
+        idInput.placeholder = 'e.g. 70572400001';
+        yearGroup.style.display = 'block';
+        sectionGroup.style.display = 'block';
+        loginLink.href = 'login.html';
+      } else if (role === 'ROLE_FACULTY') {
+        idLabel.textContent = 'Faculty Employee ID (begins with A0xx) *';
+        idInput.placeholder = 'e.g. A001';
+        yearGroup.style.display = 'none';
+        sectionGroup.style.display = 'none';
+        loginLink.href = '../faculty/login.html';
+      }
+    });
+
+    // Check URL parameters for pre-selected role
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialRole = urlParams.get('role');
+    if (initialRole && (initialRole === 'ROLE_FACULTY' || initialRole === 'ROLE_STUDENT')) {
+      roleSelect.value = initialRole;
+      roleSelect.dispatchEvent(new Event('change'));
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertBox.style.display = 'none';
+
+      const role = roleSelect.value;
+      const fullName = document.getElementById('fullName').value.trim();
+      const idVal = idInput.value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const department = document.getElementById('department').value;
+      const year = parseInt(document.getElementById('year').value) || 1;
+      const section = document.getElementById('section').value || 'A';
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Password Validation
+      if (password !== confirmPassword) {
+        alertBox.textContent = 'Passwords do not match. Please re-enter.';
+        alertBox.style.display = 'flex';
+        return;
+      }
+
+      if (password.length < 6) {
+        alertBox.textContent = 'Password must be at least 6 characters long.';
+        alertBox.style.display = 'flex';
+        return;
+      }
+
+      const payload = {
+        role,
+        fullName,
+        email,
+        phone,
+        department,
+        password,
+        confirmPassword
+      };
+
+      if (role === 'ROLE_STUDENT') {
+        if (!/^70572400\d{3,}$/.test(idVal)) {
+          alertBox.textContent = 'Student ID must begin with 70572400 followed by 3 digits (e.g. 70572400001).';
+          alertBox.style.display = 'flex';
+          return;
+        }
+        payload.studentId = idVal;
+        payload.year = year;
+        payload.section = section;
+      } else if (role === 'ROLE_FACULTY') {
+        if (!/^A0[0-9A-Za-z]{2,}$/i.test(idVal)) {
+          alertBox.textContent = 'Faculty Employee ID must begin with A0 (e.g. A001).';
+          alertBox.style.display = 'flex';
+          return;
+        }
+        payload.employeeId = idVal.toUpperCase();
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registering Account...';
+
+      try {
+        const resp = await api.post('/auth/register', payload);
+
+        sessionStorage.setItem('spd_pending_email', email);
+        sessionStorage.setItem('spd_pending_role', role);
+        sessionStorage.removeItem('spd_pending_otp');
+
+        showToast(resp.message || 'Registration successful! Verification code sent to your email.', 'success');
+
+        const roleParam = `&role=${encodeURIComponent(role)}`;
+        setTimeout(() => {
+          window.location.href = `verify-otp.html?email=${encodeURIComponent(email)}${roleParam}`;
+        }, 1200);
+      } catch (err) {
+        let msg = err.message || 'Registration failed. Please check your inputs.';
+        if (msg.toLowerCase().includes('already exists')) {
+          msg += ` <a href="verify-otp.html?email=${encodeURIComponent(email)}&role=${encodeURIComponent(role)}" style="font-weight:700; text-decoration:underline; margin-left:6px; color: #1e40af;">Verify Existing Account ➡️</a>`;
+        }
+        alertBox.innerHTML = msg;
+        alertBox.style.display = 'flex';
+        showToast(err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Complete Registration & Request OTP ➡️';
+      }
+    });
+  </script>
+
+</body>
+</html>

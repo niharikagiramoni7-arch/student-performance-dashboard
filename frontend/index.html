@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StudentHub">
+  <title>Student Performance Dashboard - Monitor. Analyze. Improve.</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="landing-nav">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-size: 1.8rem;">🎓</span>
+      <div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); line-height: 1;">Student Performance Dashboard</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Monitor. Analyze. Improve.</div>
+      </div>
+    </div>
+
+    <nav style="display: flex; align-items: center; gap: 2rem;">
+      <a href="#home" style="font-weight: 600; color: var(--text-main);">Home</a>
+      <a href="#about" style="font-weight: 600; color: var(--text-muted);">About</a>
+      <a href="#features" style="font-weight: 600; color: var(--text-muted);">Features</a>
+      <a href="role-selection.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="role-selection.html" class="btn btn-primary btn-sm">Get Started</a>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="home" class="landing-hero">
+    <div class="badge badge-primary" style="margin-bottom: 1.5rem; padding: 0.4rem 1rem; font-size: 0.85rem;">
+      ✨ Complete Academic Management Solution
+    </div>
+    <h1 class="hero-title">Track Your Academic Performance Smarter</h1>
+    <p class="hero-subtitle">
+      Monitor attendance, marks, assignments, CGPA and academic progress in one centralized platform designed for Students, Faculty, and Administrators.
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
+      <a href="student/login.html" class="btn btn-primary" style="font-weight: 700; padding: 0.75rem 1.25rem;">
+        👨‍🎓 Student Portal ➡️
+      </a>
+      <a href="faculty/login.html" class="btn btn-primary" style="font-weight: 700; padding: 0.75rem 1.25rem; background: var(--secondary); border-color: var(--secondary);">
+        👨‍🏫 Faculty Portal ➡️
+      </a>
+      <a href="admin/login.html" class="btn btn-primary" style="font-weight: 700; padding: 0.75rem 1.25rem; background: #d97706; border-color: #b45309;">
+        🛡️ Administrator Portal ➡️
+      </a>
+    </div>
+    <div>
+      <a href="role-selection.html" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: underline;">View Institutional Credentials & Role Gateway</a>
+    </div>
+
+    <!-- Quick stats strip -->
+    <div style="max-width: 900px; margin: 4rem auto 0; background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; display: flex; justify-content: space-around; box-shadow: var(--shadow-md); flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary);">100%</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Real-time Sync</div>
+      </div>
+      <div style="border-left: 1px solid var(--border-color); padding-left: 2rem;">
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--secondary);">Automated</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">CGPA Calculation</div>
+      </div>
+      <div style="border-left: 1px solid var(--border-color); padding-left: 2rem;">
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--success);">Interactive</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Chart.js Analytics</div>
+      </div>
+      <div style="border-left: 1px solid var(--border-color); padding-left: 2rem;">
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--warning);">Role-Based</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Student, Faculty & Admin</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" style="padding: 4rem 2rem; background: #fff; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+    <div style="max-width: 960px; margin: 0 auto; text-align: center;">
+      <h2 style="font-size: 2.25rem; margin-bottom: 1rem;">About The Platform</h2>
+      <p style="font-size: 1.1rem; line-height: 1.7; color: var(--text-muted);">
+        The Student Performance Dashboard provides universities, colleges, and schools with a unified system to record daily attendance, evaluate internal and external exam marks, track student submissions, dynamically calculate SGPA/CGPA with configurable credit point rubrics, and generate institutional compliance reports.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="features-section">
+    <div style="text-align: center; max-width: 700px; margin: 0 auto;">
+      <h2 style="font-size: 2.25rem; margin-bottom: 0.75rem;">Core Academic Features</h2>
+      <p>Everything students, faculty members, and academic administrators need in one single workflow.</p>
+    </div>
+
+    <div class="features-grid">
+      <!-- 1. Attendance Tracking -->
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3 style="margin-bottom: 0.5rem;">Attendance Tracking</h3>
+        <p>Faculty can record student attendance per subject and date. Students view real-time percentage progress bars with warning alerts for attendance below 75%.</p>
+      </div>
+
+      <!-- 2. Marks Management -->
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 style="margin-bottom: 0.5rem;">Marks Management</h3>
+        <p>Record internal assessments and semester exams with built-in validation limits. Automatic computation of total marks, grades (O, A+, A, B, C, F), and grade points.</p>
+      </div>
+
+      <!-- 3. Assignment Tracking -->
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3 style="margin-bottom: 0.5rem;">Assignment Tracking</h3>
+        <p>Create coursework assignments with deadlines. Students can submit solutions directly and review evaluation scores and personalized faculty feedback.</p>
+      </div>
+
+      <!-- 4. CGPA Calculation -->
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3 style="margin-bottom: 0.5rem;">CGPA Calculation</h3>
+        <p>Automatic semester GPA and cumulative CGPA calculations based on actual academic scores and course credits. Updates dynamically upon marks entry.</p>
+      </div>
+
+      <!-- 5. Performance Analytics -->
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3 style="margin-bottom: 0.5rem;">Performance Analytics</h3>
+        <p>Interactive Chart.js visualizations including semester GPA trends, subject marks distributions, attendance breakdowns, and identified academic strengths and focus areas.</p>
+      </div>
+
+      <!-- 6. Academic Reports -->
+      <div class="feature-card">
+        <div class="feature-icon">📑</div>
+        <h3 style="margin-bottom: 0.5rem;">Academic Reports</h3>
+        <p>Institution-wide report generation for attendance, marks, CGPA merit rankings, and coursework submissions. Downloadable in CSV or formatted print-ready PDF.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section style="background: linear-gradient(135deg, var(--bg-sidebar), #1e1b4b); color: #fff; padding: 5rem 2rem; text-align: center;">
+    <h2 style="color: #fff; font-size: 2.25rem; margin-bottom: 1rem;">Ready to Empower Your Campus?</h2>
+    <p style="color: #cbd5e1; max-width: 600px; margin: 0 auto 2rem; font-size: 1.1rem;">
+      Join students, faculty, and administrators monitoring and improving academic success together.
+    </p>
+    <a href="role-selection.html" class="btn btn-primary btn-lg" style="background: #fff; color: var(--primary); font-weight: 700;">
+      Choose Your Role & Get Started ➡️
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background: #0f172a; color: #94a3b8; padding: 2rem; text-align: center; font-size: 0.85rem; border-top: 1px solid #1e293b;">
+    <p>© 2026 Student Performance Dashboard. Built with HTML5, CSS3, Vanilla JS, Java Spring Boot & MySQL.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

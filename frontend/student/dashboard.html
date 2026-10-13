@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Performance Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span style="font-size: 1.8rem;">🎓</span>
+        <div>
+          <div class="sidebar-brand-title">Student Portal</div>
+          <span class="sidebar-brand-badge">ACADEMIC TRACKER</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active" data-tab="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-link" data-tab="attendance">
+          <span class="nav-icon">📅</span>
+          <span>Attendance</span>
+        </a>
+        <a href="#" class="nav-link" data-tab="marks">
+          <span class="nav-icon">📝</span>
+          <span>Marks & Grades</span>
+        </a>
+        <a href="#" class="nav-link" data-tab="assignments">
+          <span class="nav-icon">📚</span>
+          <span>Assignments</span>
+        </a>
+        <a href="#" class="nav-link" data-tab="performance">
+          <span class="nav-icon">📈</span>
+          <span>Performance</span>
+        </a>
+        <a href="#" class="nav-link" data-tab="profile">
+          <span class="nav-icon">⚙️</span>
+          <span>Profile & Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn btn-secondary" style="width: 100%; justify-content: flex-start; background: #1e293b; color: #f8fafc; border-color: #334155;">
+          <span>🚪</span> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="menu-toggle-btn" class="menu-toggle-btn">☰</button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h2 id="current-page-title" class="page-title">Student Dashboard</h2>
+            <span class="institution-header-badge">SVKM's NMIMS • MPSTME</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Role Switcher Pill Bar -->
+          <div id="role-switcher-container"></div>
+
+          <!-- Notification Bell -->
+          <div class="notif-wrapper">
+            <button id="notif-btn" class="notif-btn" title="Notifications">
+              🔔
+              <span id="notif-badge" class="notif-badge" style="display: none;">0</span>
+            </button>
+
+            <div id="notif-dropdown" class="notif-dropdown">
+              <div class="notif-header">
+                <span>Notifications</span>
+                <button id="mark-all-read-btn" style="background: none; border: none; color: var(--primary); font-size: 0.75rem; cursor: pointer; font-weight: 600;">Mark all read</button>
+              </div>
+              <div id="notif-list" class="notif-list">
+                <div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Loading notifications...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Profile Avatar -->
+          <div class="user-profile-badge" onclick="document.querySelector('[data-tab=profile]').click()">
+            <div id="user-avatar-initial" class="user-avatar">S</div>
+            <div class="user-info-text">
+              <div id="header-student-name" class="user-name">Loading...</div>
+              <div id="header-student-id" class="user-subtext">STU-0000</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <main class="content-area">
+
+        <!-- ==========================================
+             TAB 1: DASHBOARD
+             ========================================== -->
+        <section id="pane-dashboard" class="tab-pane active">
+          <!-- Dashboard Metric Cards -->
+          <div class="grid-4">
+            <div class="stat-card">
+              <div class="stat-icon indigo">⚡</div>
+              <div class="stat-info">
+                <div id="stat-cgpa" class="stat-value">0.00</div>
+                <div class="stat-label">Current CGPA</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon emerald">📅</div>
+              <div class="stat-info">
+                <div id="stat-attendance" class="stat-value">0%</div>
+                <div class="stat-label">Overall Attendance</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon cyan">📖</div>
+              <div class="stat-info">
+                <div id="stat-subjects" class="stat-value">0</div>
+                <div class="stat-label">Total Subjects</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon amber">⏳</div>
+              <div class="stat-info">
+                <div id="stat-pending" class="stat-value">0</div>
+                <div class="stat-label">Pending Assignments</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attendance Warning Banner -->
+          <div id="overview-attendance-warning" class="alert alert-warning" style="display: none;"></div>
+
+          <!-- Dual Column: Recent Marks & Recent Assignments -->
+          <div class="grid-2">
+            <!-- Recent Marks -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Recent Marks Evaluation</h3>
+                <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-tab=marks]').click()">View All Marks</button>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Internal</th>
+                      <th>External</th>
+                      <th>Total</th>
+                      <th>Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-marks-body">
+                    <tr><td colspan="5" style="text-align: center;">Loading marks...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Recent Assignments -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Coursework Assignments</h3>
+                <button class="btn btn-secondary btn-sm" onclick="document.querySelector('[data-tab=assignments]').click()">View All</button>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Assignment</th>
+                      <th>Due Date</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-assignments-body">
+                    <tr><td colspan="4" style="text-align: center;">Loading assignments...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Academic Highlights Strip -->
+          <div class="grid-2">
+            <div class="card" style="border-left: 4px solid var(--success);">
+              <h3 class="card-title" style="margin-bottom: 1rem; color: var(--success);">🌟 Academic Strengths</h3>
+              <ul id="overview-strengths" style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--text-main);">
+                <li>Loading performance highlights...</li>
+              </ul>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--warning);">
+              <h3 class="card-title" style="margin-bottom: 1rem; color: var(--warning);">🎯 Areas for Improvement</h3>
+              <ul id="overview-improvements" style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--text-main);">
+                <li>Loading improvement recommendations...</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 2: ATTENDANCE
+             ========================================== -->
+        <section id="pane-attendance" class="tab-pane">
+          <div class="grid-4" style="margin-bottom: 1.5rem;">
+            <div class="card" style="text-align: center;">
+              <div id="att-overall-pct" style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">0%</div>
+              <p style="font-weight: 600; text-transform: uppercase; font-size: 0.8rem;">Attendance Rate</p>
+              <div class="progress-bar-bg" style="margin-top: 0.75rem;">
+                <div id="att-overall-bar" class="progress-bar-fill progress-success" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <div class="card" style="text-align: center;">
+              <div id="att-total-classes" style="font-size: 2.5rem; font-weight: 800; color: var(--text-main);">0</div>
+              <p style="font-weight: 600; text-transform: uppercase; font-size: 0.8rem;">Total Classes Held</p>
+            </div>
+
+            <div class="card" style="text-align: center;">
+              <div id="att-attended-classes" style="font-size: 2.5rem; font-weight: 800; color: var(--success);">0</div>
+              <p style="font-weight: 600; text-transform: uppercase; font-size: 0.8rem;">Classes Attended</p>
+            </div>
+
+            <div class="card" style="text-align: center;">
+              <div id="att-absent-classes" style="font-size: 2.5rem; font-weight: 800; color: var(--danger);">0</div>
+              <p style="font-weight: 600; text-transform: uppercase; font-size: 0.8rem;">Classes Absent</p>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <!-- Subject-wise Attendance Table -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Subject-Wise Attendance Breakdown</h3>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject</th>
+                      <th>Total</th>
+                      <th>Present</th>
+                      <th>Absent</th>
+                      <th>Attendance %</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="subject-attendance-body">
+                    <tr><td colspan="6" style="text-align: center;">Loading attendance...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Attendance Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Attendance Ratio</h3>
+              </div>
+              <div style="height: 280px; position: relative;">
+                <canvas id="attendanceChartCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 3: MARKS & GRADES
+             ========================================== -->
+        <section id="pane-marks" class="tab-pane">
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+              <h3 class="card-title">Subject-Wise Marks Evaluation</h3>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Semester</th>
+                    <th>Code</th>
+                    <th>Subject Name</th>
+                    <th>Internal (40)</th>
+                    <th>External (60)</th>
+                    <th>Total (100)</th>
+                    <th>Grade & Points</th>
+                  </tr>
+                </thead>
+                <tbody id="marks-table-body">
+                  <tr><td colspan="7" style="text-align: center;">Loading marks...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Subject Marks Bar Chart -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Marks Distribution by Subject</h3>
+            </div>
+            <div style="height: 320px; position: relative;">
+              <canvas id="marksChartCanvas"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 4: ASSIGNMENTS
+             ========================================== -->
+        <section id="pane-assignments" class="tab-pane">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">All Coursework & Assignments</h3>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title & Description</th>
+                    <th>Subject</th>
+                    <th>Assigned Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="all-assignments-body">
+                  <tr><td colspan="7" style="text-align: center;">Loading assignments...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 5: PERFORMANCE ANALYTICS
+             ========================================== -->
+        <section id="pane-performance" class="tab-pane">
+          <div class="grid-2">
+            <!-- 1. Semester-wise CGPA Line Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📈 Semester-Wise CGPA / SGPA Progression</h3>
+              </div>
+              <div style="height: 280px; position: relative;">
+                <canvas id="cgpaTrendCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- 2. Subject-wise Marks Bar Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📊 Subject Marks Comparison</h3>
+              </div>
+              <div style="height: 280px; position: relative;">
+                <canvas id="perfMarksCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- 3. Attendance Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📅 Overall Attendance Ratio</h3>
+              </div>
+              <div style="height: 260px; position: relative;">
+                <canvas id="perfAttendanceCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- 4. Assignment Status Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📝 Assignment Submission Breakdown</h3>
+              </div>
+              <div style="height: 260px; position: relative;">
+                <canvas id="perfAssignmentCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             TAB 6: PROFILE & SETTINGS
+             ========================================== -->
+        <section id="pane-profile" class="tab-pane">
+          <div class="grid-2">
+            <!-- Edit Profile -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Student Profile Details</h3>
+                <span class="badge badge-primary">Cumulative CGPA: <strong id="prof-cgpa-display">0.00</strong></span>
+              </div>
+              <form id="student-profile-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="prof-id">Student ID</label>
+                    <input type="text" id="prof-id" class="form-control" disabled>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="prof-email">Email Address</label>
+                    <input type="email" id="prof-email" class="form-control" disabled>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="prof-name">Full Name</label>
+                  <input type="text" id="prof-name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="prof-phone">Phone Number</label>
+                  <input type="text" id="prof-phone" class="form-control">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="prof-dept">Department</label>
+                    <input type="text" id="prof-dept" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="prof-year">Year</label>
+                    <input type="number" id="prof-year" class="form-control" min="1" max="4" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="prof-section">Section</label>
+                    <input type="text" id="prof-section" class="form-control" required>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Profile Changes</button>
+              </form>
+            </div>
+
+            <!-- Change Password -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Security & Password</h3>
+              </div>
+              <form id="student-password-form">
+                <div class="form-group">
+                  <label class="form-label" for="current-password">Current Password</label>
+                  <input type="password" id="current-password" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="new-password">New Password (min 6 characters)</label>
+                  <input type="password" id="new-password" class="form-control" placeholder="••••••••" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="confirm-new-password">Confirm New Password</label>
+                  <input type="password" id="confirm-new-password" class="form-control" placeholder="••••••••" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Update Password</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Submission Modal -->
+  <div id="submission-modal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modal-assignment-title" class="modal-title">Submit Assignment</h3>
+        <button type="button" class="modal-close" onclick="closeSubmitModal()">×</button>
+      </div>
+      <form id="assignment-submit-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="submission-notes">Submission Notes & Answers</label>
+            <textarea id="submission-notes" class="form-control" rows="4" placeholder="Enter answers, algorithm notes, or git repository link..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="submission-link">Optional Attachment / Document Link</label>
+            <input type="text" id="submission-link" class="form-control" placeholder="https://github.com/... or Google Drive link">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeSubmitModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Confirm Submission</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/notifications.js"></script>
+  <script src="../js/charts.js"></script>
+  <script src="../js/student-dashboard.js"></script>
+
+</body>
+</html>
