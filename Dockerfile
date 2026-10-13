@@ -24,11 +24,11 @@ WORKDIR /app
 # Add curl for health check
 RUN apk --no-cache add curl
 
-# Create non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Create non-root user and ensure data dir is writable for H2 fallback
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && mkdir -p /app/data && chown -R appuser:appgroup /app
 
 # Copy compiled jar from build stage
-COPY --from=builder /workspace/target/student-performance-backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder --chown=appuser:appgroup /workspace/target/student-performance-backend-0.0.1-SNAPSHOT.jar app.jar
 
 # Dynamic port assignment for Render ($PORT)
 ENV PORT=8080
