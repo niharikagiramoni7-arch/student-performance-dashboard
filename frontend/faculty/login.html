@@ -163,7 +163,7 @@
           otpInput.focus();
 
           startResendCooldown(60);
-          showToast('Verification code dispatched to ' + email, 'info');
+          showToast(resp.message || ('Verification code dispatched to ' + email), resp.emailSent ? 'info' : 'warning');
         } else if (resp.token) {
           auth.saveSession(resp);
           showToast('Welcome, ' + resp.fullName + '!', 'success');
