@@ -32,11 +32,8 @@ public class StudentPerformanceApplication {
     private static void loadDotEnv() {
         Path[] possiblePaths = new Path[]{
                 Paths.get(".env"),
-                Paths.get(".env.example"),
                 Paths.get("../.env"),
-                Paths.get("../.env.example"),
-                Paths.get(System.getProperty("user.dir"), ".env"),
-                Paths.get(System.getProperty("user.dir"), ".env.example")
+                Paths.get(System.getProperty("user.dir"), ".env")
         };
         for (Path p : possiblePaths) {
             if (Files.exists(p)) {
