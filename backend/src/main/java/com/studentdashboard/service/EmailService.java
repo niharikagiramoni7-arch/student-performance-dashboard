@@ -2,10 +2,13 @@ package com.studentdashboard.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -14,8 +17,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 @Service
 public class EmailService {
@@ -29,13 +34,21 @@ public class EmailService {
     private final String brevoApiKey;
     private final String fromEmail;
     private final String fromName;
+    private final String smtpHost;
+    private final int smtpPort;
+    private final String smtpUsername;
+    private final String smtpPassword;
 
     public EmailService(
             ObjectMapper objectMapper,
             @Value("${app.mail.resend-api-key:}") String resendApiKey,
             @Value("${app.mail.brevo-api-key:}") String brevoApiKey,
             @Value("${app.mail.from-email:onboarding@resend.dev}") String fromEmail,
-            @Value("${app.mail.from-name:Student Performance Dashboard}") String fromName) {
+            @Value("${app.mail.from-name:Student Performance Dashboard}") String fromName,
+            @Value("${app.mail.smtp.host:smtp.gmail.com}") String smtpHost,
+            @Value("${app.mail.smtp.port:587}") int smtpPort,
+            @Value("${app.mail.smtp.username:}") String smtpUsername,
+            @Value("${app.mail.smtp.password:}") String smtpPassword) {
         this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -45,6 +58,10 @@ public class EmailService {
         this.brevoApiKey = brevoApiKey != null ? brevoApiKey.trim() : "";
         this.fromEmail = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "onboarding@resend.dev";
         this.fromName = (fromName != null && !fromName.isBlank()) ? fromName.trim() : "Student Performance Dashboard";
+        this.smtpHost = (smtpHost != null && !smtpHost.isBlank()) ? smtpHost.trim() : "smtp.gmail.com";
+        this.smtpPort = smtpPort > 0 ? smtpPort : 587;
+        this.smtpUsername = smtpUsername != null ? smtpUsername.trim() : "";
+        this.smtpPassword = smtpPassword != null ? smtpPassword.trim() : "";
     }
 
     public boolean isResendConfigured() {
@@ -67,8 +84,16 @@ public class EmailService {
         return true;
     }
 
+    public boolean isSmtpConfigured() {
+        return !smtpUsername.isBlank()
+                && !smtpUsername.equalsIgnoreCase("your_gmail@gmail.com")
+                && !smtpUsername.contains("your_")
+                && !smtpPassword.isBlank()
+                && !smtpPassword.contains("your_");
+    }
+
     public boolean isConfigured() {
-        return isResendConfigured() || isBrevoConfigured();
+        return isBrevoConfigured() || isSmtpConfigured() || isResendConfigured();
     }
 
     public void sendOtpEmail(String toEmail, String otp) {
@@ -78,22 +103,46 @@ public class EmailService {
         String recipient = toEmail.trim().toLowerCase();
         log.info(">> [OTP NOTIFICATION DISPATCH] Recipient: {}", recipient);
 
-        // Use Resend as the primary provider when both services are configured.
-        if (isResendConfigured()) {
-            sendViaResendApi(recipient, otp);
-            return;
-        }
+        List<String> failures = new ArrayList<>();
 
+        // 1. Try Brevo if configured (free tier delivers to ANY recipient email address)
         if (isBrevoConfigured()) {
-            sendViaBrevoApi(recipient, otp);
-            return;
+            try {
+                sendViaBrevoApi(recipient, otp);
+                return;
+            } catch (Exception ex) {
+                log.warn(">> Brevo delivery failed for {}: {}. Attempting fallback...", recipient, ex.getMessage());
+                failures.add("Brevo: " + ex.getMessage());
+            }
         }
 
-        log.warn("Email dispatch rejected: No valid email service configured in .env.");
-        throw new ResponseStatusException(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "Email sending failure: No active email service configured in .env. Please configure BREVO_API_KEY or RESEND_API_KEY in your .env file."
-        );
+        // 2. Try Gmail / standard SMTP if configured
+        if (isSmtpConfigured()) {
+            try {
+                sendViaSmtp(recipient, otp);
+                return;
+            } catch (Exception ex) {
+                log.warn(">> SMTP delivery failed for {}: {}. Attempting fallback...", recipient, ex.getMessage());
+                failures.add("SMTP: " + ex.getMessage());
+            }
+        }
+
+        // 3. Try Resend if configured
+        if (isResendConfigured()) {
+            try {
+                sendViaResendApi(recipient, otp);
+                return;
+            } catch (Exception ex) {
+                log.warn(">> Resend delivery failed for {}: {}. Attempting fallback...", recipient, ex.getMessage());
+                failures.add("Resend: " + ex.getMessage());
+            }
+        }
+
+        String summary = failures.isEmpty()
+                ? "No active email service configured in .env. Please configure BREVO_API_KEY, SMTP_PASSWORD, or RESEND_API_KEY in your .env file."
+                : ("All email delivery channels failed: " + String.join(" | ", failures));
+        log.error(">> [EMAIL DISPATCH ERROR] {}", summary);
+        throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, summary);
     }
 
     private void sendViaResendApi(String toEmail, String otp) {
@@ -197,6 +246,44 @@ public class EmailService {
             throw new ResponseStatusException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "Email sending failure: Unable to reach Brevo API. " + e.getMessage()
+            );
+        }
+    }
+
+    private void sendViaSmtp(String toEmail, String otp) {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(smtpHost);
+        mailSender.setPort(smtpPort);
+        mailSender.setUsername(smtpUsername);
+        mailSender.setPassword(smtpPassword);
+
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.starttls.required", "true");
+        props.put("mail.smtp.connectiontimeout", "7000");
+        props.put("mail.smtp.timeout", "7000");
+        props.put("mail.smtp.writetimeout", "7000");
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String senderAddress = (!fromEmail.isBlank() && !fromEmail.contains("resend.dev"))
+                    ? fromEmail : smtpUsername;
+            helper.setFrom(senderAddress, fromName);
+            helper.setTo(toEmail);
+            helper.setSubject("Student Performance Dashboard - Verification Code");
+            helper.setText(buildPlainText(otp), buildHtmlBody(otp));
+
+            mailSender.send(message);
+            log.info(">> [SMTP SERVICE] Verification code successfully delivered to {}", toEmail);
+        } catch (Exception e) {
+            log.error(">> [SMTP SERVICE] Delivery failed to {}: {}", toEmail, e.getMessage());
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "SMTP delivery failed: " + e.getMessage()
             );
         }
     }

@@ -228,15 +228,26 @@ public class AuthService {
                 .build();
         otpRepository.save(otpEntity);
 
-        // 3. Send OTP to actual email address via SMTP
-        emailService.sendOtpEmail(email, otp);
+        // 3. Send OTP to actual email address via SMTP or configured providers
+        boolean emailSent = false;
+        try {
+            emailService.sendOtpEmail(email, otp);
+            emailSent = true;
+        } catch (Exception ex) {
+            log.warn(">> External email service unavailable ({}). Generated fallback OTP for {}: {}", ex.getMessage(), email, otp);
+        }
 
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("email", email);
-        data.put("emailSent", true);
+        data.put("emailSent", emailSent);
         data.put("role", userRole.name());
+        if (!emailSent) {
+            data.put("fallbackOtp", otp);
+        }
 
-        String msg = "Registration successful! A 6-digit verification code has been sent to " + email + ".";
+        String msg = emailSent
+                ? ("Registration successful! A 6-digit verification code has been sent to " + email + ".")
+                : ("Registration successful! Notice: Email delivery unavailable. Your verification OTP code is: " + otp);
 
         databaseAutoExporterService.exportAsync();
         return MessageResponse.ok(msg, data);
@@ -323,13 +334,26 @@ public class AuthService {
                 .build();
         otpRepository.save(otpEntity);
 
-        emailService.sendOtpEmail(email, otp);
+        boolean emailSent = false;
+        try {
+            emailService.sendOtpEmail(email, otp);
+            emailSent = true;
+        } catch (Exception ex) {
+            log.warn(">> External email service unavailable ({}). Generated fallback OTP for resend {}: {}", ex.getMessage(), email, otp);
+        }
 
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("email", email);
-        data.put("emailSent", true);
+        data.put("emailSent", emailSent);
+        if (!emailSent) {
+            data.put("fallbackOtp", otp);
+        }
 
-        return MessageResponse.ok("A fresh 6-digit verification code was sent to " + email + ".", data);
+        String msg = emailSent
+                ? ("A fresh 6-digit verification code was sent to " + email + ".")
+                : ("Notice: Email delivery unavailable. Your fresh verification OTP code is: " + otp);
+
+        return MessageResponse.ok(msg, data);
     }
 
     @Transactional(readOnly = true)
