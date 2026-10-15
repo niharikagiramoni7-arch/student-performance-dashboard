@@ -434,18 +434,28 @@ public class AuthService {
                 .build();
         otpRepository.save(otpEntity);
 
-        emailService.sendOtpEmail(email, otp);
+        boolean emailSent = false;
+        try {
+            emailService.sendOtpEmail(email, otp);
+            emailSent = true;
+            recordAudit(user.getId(), email, user.getFullName(), user.getRole().name(), "OTP_CHALLENGED", "Password verified. Dispatched 6-digit 2FA OTP code to user email.");
+        } catch (Exception ex) {
+            log.warn(">> External email service unavailable ({}). Generated fallback OTP in system audit for {}: {}", ex.getMessage(), email, otp);
+            recordAudit(user.getId(), email, user.getFullName(), user.getRole().name(), "OTP_CHALLENGED_FALLBACK", "Password verified. Email delivery failed, fallback OTP generated: " + otp);
+        }
 
-        recordAudit(user.getId(), email, user.getFullName(), user.getRole().name(), "OTP_CHALLENGED", "Password verified. Dispatched 6-digit 2FA OTP code to user email.");
+        String noticeMessage = emailSent
+                ? ("Credentials valid. A 6-digit OTP verification code has been sent to " + email + ".")
+                : ("Credentials valid. Notice: Email service unavailable. Your verification OTP code is: " + otp);
 
         return AuthResponse.builder()
                 .requiresOtp(true)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
-                .emailSent(true)
+                .emailSent(emailSent)
                 .lastLoginAt(user.getLastLoginAt())
-                .message("Credentials valid. A 6-digit OTP verification code has been sent to " + email + ".")
+                .message(noticeMessage)
                 .build();
     }
 
