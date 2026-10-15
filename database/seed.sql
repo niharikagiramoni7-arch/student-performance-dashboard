@@ -1,6 +1,6 @@
 -- ======================================================
 -- CURRENT LIVE DATABASE EXPORT
--- Generated on 2026-10-15 09:35:00 (Live Auto-Sync)
+-- Generated on 2026-10-15 09:40:16 (Live Auto-Sync)
 -- ======================================================
 
 USE student_performance_db;
@@ -9,11 +9,9 @@ USE student_performance_db;
 INSERT INTO users (id, email, full_name, phone, role, status) VALUES
   (1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', '+91 9876543210', 'ROLE_ADMIN', 'ACTIVE');
 
--- 2. LOGIN AUDIT LOGS TABLE (3 records stored):
+-- 2. LOGIN AUDIT LOGS TABLE (1 records stored):
 INSERT INTO login_audits (id, user_id, email, full_name, role, ip_address, status, remarks, login_time) VALUES
-  (1, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '103.177.233.106', 'FAILED_PASSWORD', 'Login failed: incorrect password', '2026-10-15T09:34:04.772474'),
-  (2, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '103.177.233.106', 'FAILED_PASSWORD', 'Login failed: incorrect password', '2026-10-15T09:34:23.467994'),
-  (3, NULL, 'giramoniniharika77@gmail.com', NULL, 'ROLE_STUDENT', '103.177.233.106', 'FAILED_CREDENTIALS', 'Login failed: account does not exist', '2026-10-15T09:34:59.166446');
+  (1, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '0:0:0:0:0:0:0:1', 'OTP_CHALLENGED_FALLBACK', 'Password verified. Email delivery failed, fallback OTP generated: 426315', '2026-10-15T09:40:16.569169');
 
 -- 3. DEPARTMENTS TABLE (3 records stored):
 INSERT INTO departments (id, code, name) VALUES
