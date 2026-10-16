@@ -102,6 +102,21 @@ public class StudentPerformanceApplication {
                             } else if ("ADMIN_PASSWORD".equalsIgnoreCase(key)) {
                                 System.setProperty("ADMIN_PASSWORD", val);
                                 System.setProperty("app.security.admin-password", val);
+                            } else if ("MYSQL_URL".equalsIgnoreCase(key) || "DATABASE_URL".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_URL", val);
+                                System.setProperty("DATABASE_URL", val);
+                            } else if ("MYSQL_HOST".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_HOST", val);
+                            } else if ("MYSQL_PORT".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_PORT", val);
+                            } else if ("MYSQL_DATABASE".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_DATABASE", val);
+                            } else if ("MYSQL_USER".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_USER", val);
+                            } else if ("MYSQL_PASSWORD".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_PASSWORD", val);
+                            } else if ("MYSQL_SSL_MODE".equalsIgnoreCase(key)) {
+                                System.setProperty("MYSQL_SSL_MODE", val);
                             }
                         }
                     }

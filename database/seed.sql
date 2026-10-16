@@ -1,19 +1,18 @@
 -- ======================================================
 -- CURRENT LIVE DATABASE EXPORT
--- Generated on 2026-10-15 12:16:08 (Live Auto-Sync)
+-- Generated on 2026-10-15 10:05:50 (Live Auto-Sync)
 -- ======================================================
 
 USE student_performance_db;
 
--- 1. USERS TABLE (2 records stored):
+-- 1. USERS TABLE (1 records stored):
 INSERT INTO users (id, email, full_name, phone, role, status) VALUES
-  (1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', '+91 9876543210', 'ROLE_ADMIN', 'ACTIVE'),
-  (2, 'niharikagiramoni7+teststudent@gmail.com', 'Test Student', NULL, 'ROLE_STUDENT', 'PENDING_VERIFICATION');
+  (1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', '+91 9876543210', 'ROLE_ADMIN', 'ACTIVE');
 
 -- 2. LOGIN AUDIT LOGS TABLE (2 records stored):
 INSERT INTO login_audits (id, user_id, email, full_name, role, ip_address, status, remarks, login_time) VALUES
-  (1, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '0:0:0:0:0:0:0:1', 'OTP_CHALLENGED', 'Password verified. Dispatched 6-digit 2FA OTP code to user email.', '2026-10-15T12:15:30.756265'),
-  (2, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '0:0:0:0:0:0:0:1', 'OTP_CHALLENGED', 'Password verified. Dispatched 6-digit 2FA OTP code to user email.', '2026-10-15T12:16:07.900136');
+  (1, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '0:0:0:0:0:0:0:1', 'OTP_CHALLENGED_FALLBACK', 'Password verified. Email delivery failed, fallback OTP generated: 260001', '2026-10-15T10:05:38.483971'),
+  (2, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '0:0:0:0:0:0:0:1', 'SUCCESS', 'Two-factor authentication successful. User granted active session.', '2026-10-15T10:05:49.159254');
 
 -- 3. DEPARTMENTS TABLE (3 records stored):
 INSERT INTO departments (id, code, name) VALUES
@@ -32,10 +31,9 @@ INSERT INTO subjects (id, code, name, department, credits, semester) VALUES
   (7, 'EC401', 'Digital Signal Processing', 'Electronics & Communication Engineering', 4, 4),
   (8, 'EC402', 'VLSI Design', 'Electronics & Communication Engineering', 4, 4);
 
--- 5. STUDENTS TABLE (2 records stored):
+-- 5. STUDENTS TABLE (1 records stored):
 INSERT INTO students (id, user_id, student_id, department, study_year, section, current_cgpa) VALUES
-  (1, 1, '70572400000', 'Computer Science & Engineering', 1, 'A', 0.00),
-  (2, 2, '70572400001', 'Computer Science', 1, 'A', 0.00);
+  (1, 1, '70572400000', 'Computer Science & Engineering', 1, 'A', 0.00);
 
 -- 6. FACULTY TABLE (1 records stored):
 INSERT INTO faculty (id, user_id, employee_id, department, designation) VALUES
