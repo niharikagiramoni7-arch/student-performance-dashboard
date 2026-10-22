@@ -158,6 +158,20 @@ public class StudentDtos {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class NoticeDto {
+        private Long id;
+        private String title;
+        private String message;
+        private String type;
+        private Boolean isRead;
+        private LocalDateTime createdAt;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class StudentDashboardDto {
         private StudentProfileDto profile;
         private BigDecimal currentCgpa;
@@ -166,6 +180,7 @@ public class StudentDtos {
         private int pendingAssignments;
         private List<MarkRecordDto> recentMarks;
         private List<AssignmentDto> recentAssignments;
+        private List<NoticeDto> notices;
         private List<SemesterGpaDto> semesterGpaHistory;
         private List<String> academicStrengths;
         private List<String> areasForImprovement;

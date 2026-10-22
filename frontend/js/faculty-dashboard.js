@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNavigation();
   await loadFacultyDashboard();
   await loadStudentsList();
+  await loadFacultyAssignments();
   setupEventListeners();
 });
 
@@ -106,13 +107,21 @@ function renderDashboardStats(data) {
 }
 
 function populateSubjectDropdowns(subjects) {
-  allSubjectsList = subjects;
+  allSubjectsList = subjects || [];
   const attSubSelect = document.getElementById('att-subject-select');
   const markSubSelect = document.getElementById('mark-subject-select');
   const assSubSelect = document.getElementById('ass-subject-select');
 
+  if (!subjects || subjects.length === 0) {
+    const emptyOption = '<option value="">-- No subjects found for department --</option>';
+    if (attSubSelect) attSubSelect.innerHTML = emptyOption;
+    if (markSubSelect) markSubSelect.innerHTML = emptyOption;
+    if (assSubSelect) assSubSelect.innerHTML = emptyOption;
+    return;
+  }
+
   const options = '<option value="">-- Choose Subject --</option>' + subjects.map(s => `
-    <option value="${s.id}">[${s.code}] ${escapeHtml(s.name)} (Sem ${s.semester})</option>
+    <option value="${s.id}">[${escapeHtml(s.code)}] ${escapeHtml(s.name)} (Sem ${s.semester})</option>
   `).join('');
 
   if (attSubSelect) attSubSelect.innerHTML = options;
@@ -258,6 +267,57 @@ window.closeAssignmentModal = function() {
   document.getElementById('assignment-modal').classList.remove('show');
 };
 
+async function loadFacultyAssignments() {
+  try {
+    const list = await api.get('/faculty/assignments');
+    renderFacultyAssignmentsTable(list || []);
+  } catch (err) {
+    console.error('Failed to load faculty assignments:', err);
+    const tbody = document.getElementById('all-faculty-assignments-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">Click "+ Create New Assignment" above to add coursework.</td></tr>';
+    }
+  }
+}
+
+function renderFacultyAssignmentsTable(assignments) {
+  const tbody = document.getElementById('all-faculty-assignments-body');
+  if (!tbody) return;
+
+  if (assignments.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No assignments created yet. Click "+ Create New Assignment" above to add coursework.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = assignments.map(a => `
+    <tr>
+      <td>
+        <strong>${escapeHtml(a.title)}</strong><br>
+        <small style="color: var(--text-muted);">${escapeHtml(a.subjectName)} (${escapeHtml(a.subjectCode)})</small>
+        ${a.description ? `<br><small style="color: var(--text-secondary); font-style: italic;">${escapeHtml(a.description)}</small>` : ''}
+      </td>
+      <td>${a.assignedDate || 'N/A'}</td>
+      <td><strong>${a.dueDate || 'N/A'}</strong></td>
+      <td>${a.maxMarks || 100} pts</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteAssignment(${a.id}, '${escapeHtml(a.title)}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.confirmDeleteAssignment = async function(id, title) {
+  if (!confirm(`Are you sure you want to delete assignment: "${title}"?`)) return;
+  try {
+    const resp = await api.delete(`/faculty/assignments/${id}`);
+    showToast(resp.message || 'Assignment deleted successfully', 'success');
+    await loadFacultyAssignments();
+    await loadFacultyDashboard();
+  } catch (err) {
+    showToast('Failed to delete assignment: ' + err.message, 'error');
+  }
+};
+
 function setupEventListeners() {
   // Filter student form
   const filterBtn = document.getElementById('apply-filter-btn');
@@ -328,26 +388,59 @@ function setupEventListeners() {
   if (assForm) {
     assForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('ass-title-input').value.trim();
-      const subjectId = document.getElementById('ass-subject-select').value;
-      const dueDate = document.getElementById('ass-due-input').value;
-      const maxMarks = parseFloat(document.getElementById('ass-max-input').value);
-      const description = document.getElementById('ass-desc-input').value.trim();
+      const titleInput = document.getElementById('ass-title-input');
+      const subjectSelect = document.getElementById('ass-subject-select');
+      const dueInput = document.getElementById('ass-due-input');
+      const maxMarksInput = document.getElementById('ass-max-input');
+      const descInput = document.getElementById('ass-desc-input');
+
+      const title = titleInput ? titleInput.value.trim() : '';
+      const subjectIdVal = subjectSelect ? subjectSelect.value : '';
+      const dueDate = dueInput ? dueInput.value : '';
+      const maxMarks = maxMarksInput ? parseFloat(maxMarksInput.value) : 100;
+      const description = descInput ? descInput.value.trim() : '';
+
+      if (!title) {
+        showToast('Please enter an assignment title.', 'warning');
+        return;
+      }
+
+      if (!subjectIdVal || subjectIdVal === '') {
+        showToast('Please select a course subject from the dropdown.', 'warning');
+        return;
+      }
+
+      if (!dueDate) {
+        showToast('Please select a due date for the assignment.', 'warning');
+        return;
+      }
+
+      const submitBtn = assForm.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+      }
 
       try {
         const resp = await api.post('/faculty/assignments', {
           title,
-          subjectId,
+          subjectId: parseInt(subjectIdVal, 10),
           dueDate,
-          maxMarks,
+          maxMarks: isNaN(maxMarks) || maxMarks <= 0 ? 100 : maxMarks,
           description
         });
-        showToast(resp.message || 'Assignment created!', 'success');
+        showToast(resp.message || 'Assignment created successfully!', 'success');
         closeAssignmentModal();
         assForm.reset();
+        await loadFacultyAssignments();
         await loadFacultyDashboard();
       } catch (err) {
         showToast('Failed to create assignment: ' + err.message, 'error');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Assignment';
+        }
       }
     });
   }

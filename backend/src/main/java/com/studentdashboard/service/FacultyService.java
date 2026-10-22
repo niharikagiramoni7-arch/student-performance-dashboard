@@ -365,12 +365,15 @@ public class FacultyService {
         // Notify students in that department safely
         try {
             List<Student> students = studentRepository.searchStudents(subject.getDepartment(), null, null, null);
+            if (students.isEmpty()) {
+                students = studentRepository.findAll();
+            }
             for (Student s : students) {
                 if (s != null && s.getUser() != null) {
                     notificationService.createNotification(
                             s.getUser().getId(),
-                            "New Assignment",
-                            "New assignment for " + subject.getName() + ": '" + assignment.getTitle() + "' due on " + assignment.getDueDate(),
+                            "New Assignment: " + assignment.getTitle(),
+                            "New coursework assigned in " + subject.getName() + " (" + subject.getCode() + "): '" + assignment.getTitle() + "' due on " + assignment.getDueDate() + " (Max Marks: " + assignment.getMaxMarks() + ").",
                             "INFO"
                     );
                 }
@@ -528,6 +531,7 @@ public class FacultyService {
                     req.getType() != null ? req.getType() : "INFO"
             );
         }
+        databaseAutoExporterService.exportAsync();
         return MessageResponse.ok("Class notice published to " + students.size() + " student(s).");
     }
 }

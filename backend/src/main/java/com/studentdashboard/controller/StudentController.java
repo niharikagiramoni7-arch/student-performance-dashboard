@@ -80,4 +80,9 @@ public class StudentController {
     public ResponseEntity<StudentDashboardDto> getPerformance(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(studentService.getDashboardData(principal.getId()));
     }
+
+    @GetMapping("/notices")
+    public ResponseEntity<List<NoticeDto>> getNotices(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(studentService.getNotices(principal.getId()));
+    }
 }

@@ -46,19 +46,26 @@ function setupNavigation() {
           attendance: 'Attendance Management',
           marks: 'Academic Marks & Grades',
           assignments: 'Coursework & Assignments',
+          notices: 'Class Notices & Announcements',
           performance: 'Performance Analytics',
           profile: 'Student Profile & Settings'
         };
         pageTitle.textContent = titles[tab] || 'Dashboard';
       }
 
-      // Render charts if tab is activated
+      // Render charts or refresh tab content when tab is activated
       if (tab === 'performance' && studentData) {
         renderPerformanceCharts(studentData);
       } else if (tab === 'marks' && studentData) {
         renderMarksChart(studentData);
       } else if (tab === 'attendance' && studentData) {
         renderAttendanceChart(studentData);
+      } else if (tab === 'assignments') {
+        reloadStudentAssignments();
+      } else if (tab === 'notices') {
+        reloadStudentNotices();
+      } else if (tab === 'dashboard') {
+        loadDashboard();
       }
 
       // Close mobile sidebar
@@ -90,6 +97,17 @@ function setupNavigation() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => auth.logout());
   }
+
+  // Live auto-sync with database every 15 seconds so faculty updates reflect in real-time
+  setInterval(async () => {
+    try {
+      studentData = await api.get('/student/dashboard');
+      renderStudentHeader(studentData);
+      renderDashboardOverview(studentData);
+      renderAssignmentsSection(studentData);
+      renderNoticesSection(studentData);
+    } catch (ignored) {}
+  }, 15000);
 }
 
 async function loadDashboard() {
@@ -100,6 +118,7 @@ async function loadDashboard() {
     renderAttendanceSection(studentData);
     renderMarksSection(studentData);
     renderAssignmentsSection(studentData);
+    renderNoticesSection(studentData);
     renderProfileSection(studentData);
   } catch (err) {
     showToast('Failed to load student data: ' + err.message, 'error');
@@ -165,9 +184,13 @@ function renderDashboardOverview(data) {
           <td>${a.dueDate}</td>
           <td><span class="badge ${getStatusBadge(a.submissionStatus)}">${a.submissionStatus}</span></td>
           <td>
-            ${a.submissionStatus === 'PENDING' ?
-              `<button class="btn btn-primary btn-sm" onclick="openSubmitModal(${a.id}, '${escapeHtml(a.title)}')">Submit</button>` :
-              `<span style="color: var(--success); font-weight: 600; font-size: 0.8rem;">Submitted</span>`}
+            ${a.submissionStatus === 'SUBMITTED' ?
+              `<span style="color: var(--success); font-weight: 600; font-size: 0.8rem;">✓ Submitted</span>` :
+              a.submissionStatus === 'GRADED' ?
+              `<span style="color: var(--primary); font-weight: 600; font-size: 0.8rem;">✓ Graded (${a.marksObtained})</span>` :
+              a.submissionStatus === 'LATE' ?
+              `<button class="btn btn-warning btn-sm" onclick="openSubmitModal(${a.id}, '${escapeHtml(a.title)}')">Submit (Late)</button>` :
+              `<button class="btn btn-primary btn-sm" onclick="openSubmitModal(${a.id}, '${escapeHtml(a.title)}')">Submit</button>`}
           </td>
         </tr>
       `).join('');
@@ -268,15 +291,88 @@ function renderAssignmentsSection(data) {
           <td><span class="badge ${getStatusBadge(a.submissionStatus)}">${a.submissionStatus}</span></td>
           <td>${a.marksObtained != null ? `<strong>${a.marksObtained}</strong> / ${a.maxMarks}` : '<span style="color: var(--text-muted);">Pending</span>'}</td>
           <td>
-            ${a.submissionStatus === 'PENDING' ?
-              `<button class="btn btn-primary btn-sm" onclick="openSubmitModal(${a.id}, '${escapeHtml(a.title)}')">Submit Now</button>` :
-              `<span style="color: var(--success); font-weight: 600; font-size: 0.85rem;">Submitted</span>`}
+            ${a.submissionStatus === 'SUBMITTED' ?
+              `<span style="color: var(--success); font-weight: 600; font-size: 0.85rem;">✓ Submitted</span>` :
+              a.submissionStatus === 'GRADED' ?
+              `<span style="color: var(--primary); font-weight: 600; font-size: 0.85rem;">✓ Graded (${a.marksObtained}/${a.maxMarks})</span>` :
+              a.submissionStatus === 'LATE' ?
+              `<button class="btn btn-warning btn-sm" onclick="openSubmitModal(${a.id}, '${escapeHtml(a.title)}')">Submit (Late)</button>` :
+              `<button class="btn btn-primary btn-sm" onclick="openSubmitModal(${a.id}, '${escapeHtml(a.title)}')">Submit Now</button>`}
           </td>
         </tr>
       `).join('');
     }
   }
 }
+
+function renderNoticesSection(data) {
+  const notices = (data && data.notices) ? data.notices : [];
+
+  // 1. Overview card container
+  const overviewContainer = document.getElementById('overview-notices-container');
+  if (overviewContainer) {
+    if (notices.length === 0) {
+      overviewContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1rem;">No class announcements or notices broadcasted yet.</div>';
+    } else {
+      overviewContainer.innerHTML = notices.slice(0, 3).map(n => `
+        <div style="background: var(--bg-surface, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; padding: 0.85rem 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <strong style="color: var(--text-main); font-size: 0.95rem;">${escapeHtml(n.title)}</strong>
+            <span class="badge ${n.type === 'WARNING' || n.type === 'ALERT' ? 'badge-danger' : 'badge-primary'}">${escapeHtml(n.type || 'INFO')}</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 6px 0; line-height: 1.4;">${escapeHtml(n.message)}</p>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">🕒 ${new Date(n.createdAt).toLocaleString()}</div>
+        </div>
+      `).join('');
+    }
+  }
+
+  // 2. Full notices tab list
+  const allList = document.getElementById('all-notices-list');
+  if (allList) {
+    if (notices.length === 0) {
+      allList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2.5rem;">No class notices or broadcast announcements published yet.</div>';
+    } else {
+      allList.innerHTML = notices.map(n => `
+        <div class="card" style="border-left: 4px solid ${n.type === 'WARNING' || n.type === 'ALERT' ? 'var(--danger, #ef4444)' : 'var(--primary, #4f46e5)'}; padding: 1.25rem; background: var(--bg-surface, #ffffff);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px;">
+            <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">${escapeHtml(n.title)}</h4>
+            <span class="badge ${n.type === 'WARNING' || n.type === 'ALERT' ? 'badge-danger' : 'badge-primary'}">${escapeHtml(n.type || 'INFO')}</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 10px 0; white-space: pre-wrap;">${escapeHtml(n.message)}</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 8px;">
+            <span>📢 Official Faculty / Department Broadcast</span>
+            <span>🕒 ${new Date(n.createdAt).toLocaleString()}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+window.reloadStudentAssignments = async function() {
+  try {
+    const assignments = await api.get('/student/assignments');
+    if (studentData) {
+      studentData.recentAssignments = assignments;
+    }
+    renderAssignmentsSection({ recentAssignments: assignments });
+  } catch (e) {
+    console.error('Failed to reload assignments:', e);
+  }
+};
+
+window.reloadStudentNotices = async function() {
+  try {
+    const notices = await api.get('/student/notices');
+    if (studentData) {
+      studentData.notices = notices;
+    }
+    renderNoticesSection({ notices });
+  } catch (e) {
+    console.error('Failed to reload notices:', e);
+  }
+};
 
 function renderProfileSection(data) {
   const p = data.profile;

@@ -18,7 +18,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     boolean existsByStudentId(String studentId);
 
     @Query("SELECT s FROM Student s JOIN s.user u WHERE " +
-           "(:department IS NULL OR s.department = :department) AND " +
+           "(:department IS NULL OR LOWER(s.department) = LOWER(:department) OR LOWER(s.department) LIKE LOWER(CONCAT('%', :department, '%')) OR LOWER(:department) LIKE LOWER(CONCAT('%', s.department, '%'))) AND " +
            "(:year IS NULL OR s.year = :year) AND " +
            "(:section IS NULL OR s.section = :section) AND " +
            "(:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +
@@ -31,7 +31,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
             @Param("search") String search);
 
     @Query("SELECT s FROM Student s JOIN s.user u WHERE " +
-           "(:department IS NULL OR s.department = :department) AND " +
+           "(:department IS NULL OR LOWER(s.department) = LOWER(:department) OR LOWER(s.department) LIKE LOWER(CONCAT('%', :department, '%')) OR LOWER(:department) LIKE LOWER(CONCAT('%', s.department, '%'))) AND " +
            "(:year IS NULL OR s.year = :year) AND " +
            "(:section IS NULL OR s.section = :section) AND " +
            "(:search IS NULL OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) " +

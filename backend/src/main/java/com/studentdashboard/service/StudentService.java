@@ -407,6 +407,8 @@ public class StudentService {
             improvements.add("Maintain consistent performance and prepare for upcoming assessments.");
         }
 
+        List<NoticeDto> notices = getNotices(userId);
+
         return StudentDashboardDto.builder()
                 .profile(profile)
                 .currentCgpa(s.getCurrentCgpa() != null ? s.getCurrentCgpa() : BigDecimal.ZERO)
@@ -415,10 +417,25 @@ public class StudentService {
                 .pendingAssignments((int) pendingAssignments)
                 .recentMarks(marks)
                 .recentAssignments(assignments)
+                .notices(notices)
                 .semesterGpaHistory(gpaHistory)
                 .academicStrengths(strengths)
                 .areasForImprovement(improvements)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<NoticeDto> getNotices(Long userId) {
+        return notificationService.getUserNotifications(userId).stream()
+                .map(n -> NoticeDto.builder()
+                        .id(n.getId())
+                        .title(n.getTitle())
+                        .message(n.getMessage())
+                        .type(n.getType())
+                        .isRead(n.getIsRead())
+                        .createdAt(n.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private StudentProfileDto mapToProfileDto(Student s) {
