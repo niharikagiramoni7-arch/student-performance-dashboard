@@ -88,7 +88,12 @@ public class AdminService {
         User u = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         if (req.containsKey("fullName") && req.get("fullName") != null) {
-            u.setFullName(req.get("fullName").trim());
+            String name = req.get("fullName").trim();
+            if (!name.matches("^[a-zA-Z\\s]{2,60}$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Invalid Full Name. Full name must contain only alphabetic letters and spaces (numbers and special characters are not allowed).");
+            }
+            u.setFullName(name);
         }
         if (req.containsKey("phone")) {
             u.setPhone(req.get("phone"));
@@ -201,9 +206,18 @@ public class AdminService {
 
         String password = (req.getPassword() != null && !req.getPassword().isBlank()) ? req.getPassword() : "Welcome@123";
 
+        if (req.getFullName() == null || req.getFullName().trim().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Full name is required.");
+        }
+        String trimmedAdminFullName = req.getFullName().trim();
+        if (!trimmedAdminFullName.matches("^[a-zA-Z\\s]{2,60}$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid Full Name. Full name must contain only alphabetic letters and spaces (numbers and special characters are not allowed).");
+        }
+
         User u = User.builder()
                 .email(email)
-                .fullName(req.getFullName().trim())
+                .fullName(trimmedAdminFullName)
                 .phone(req.getPhone())
                 .passwordHash(passwordEncoder.encode(password))
                 .role(role)
@@ -268,7 +282,12 @@ public class AdminService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (req.getFullName() != null && !req.getFullName().isBlank()) {
-            u.setFullName(req.getFullName().trim());
+            String name = req.getFullName().trim();
+            if (!name.matches("^[a-zA-Z\\s]{2,60}$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Invalid Full Name. Full name must contain only alphabetic letters and spaces (numbers and special characters are not allowed).");
+            }
+            u.setFullName(name);
         }
         if (req.getPhone() != null) {
             u.setPhone(req.getPhone().trim());

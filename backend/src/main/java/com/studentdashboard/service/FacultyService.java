@@ -105,7 +105,12 @@ public class FacultyService {
         User u = f.getUser();
 
         if (req.getFullName() != null && !req.getFullName().isBlank()) {
-            u.setFullName(req.getFullName().trim());
+            String name = req.getFullName().trim();
+            if (!name.matches("^[a-zA-Z\\s]{2,60}$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Invalid Full Name. Full name must contain only alphabetic letters and spaces (numbers and special characters are not allowed).");
+            }
+            u.setFullName(name);
         }
         if (req.getPhone() != null) {
             u.setPhone(req.getPhone().trim());

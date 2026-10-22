@@ -475,6 +475,10 @@ function setupEventListeners() {
     profForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fullName = document.getElementById('prof-name').value.trim();
+      if (!/^[a-zA-Z\s]{2,60}$/.test(fullName)) {
+        showToast('Full name must contain only alphabetic letters and spaces (numbers and special characters are not allowed).', 'warning');
+        return;
+      }
       const phone = document.getElementById('prof-phone').value.trim();
       const designation = document.getElementById('prof-desig').value.trim();
       const department = document.getElementById('prof-dept').value.trim();

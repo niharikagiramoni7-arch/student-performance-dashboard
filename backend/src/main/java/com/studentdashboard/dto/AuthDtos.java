@@ -2,6 +2,7 @@ package com.studentdashboard.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -14,6 +15,7 @@ public class AuthDtos {
     @Builder
     public static class RegisterRequest {
         @NotBlank(message = "Full name is required")
+        @Pattern(regexp = "^[a-zA-Z\\s]{2,60}$", message = "Full name must only contain alphabetic letters and spaces (numbers and special characters are not allowed)")
         private String fullName;
 
         private String studentId; // required for student

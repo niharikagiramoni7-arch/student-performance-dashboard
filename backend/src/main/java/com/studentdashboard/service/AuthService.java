@@ -123,6 +123,15 @@ public class AuthService {
 
     @Transactional
     public MessageResponse register(RegisterRequest req) {
+        if (req.getFullName() == null || req.getFullName().trim().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Full name is required.");
+        }
+        String trimmedFullName = req.getFullName().trim();
+        if (!trimmedFullName.matches("^[a-zA-Z\\s]{2,60}$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid Full Name: Full name must contain only alphabetic letters and spaces. Numbers and special characters are not allowed.");
+        }
+
         validateInEmail(req.getEmail());
 
         if (!req.getPassword().equals(req.getConfirmPassword())) {

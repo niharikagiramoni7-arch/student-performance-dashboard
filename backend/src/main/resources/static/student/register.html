@@ -31,7 +31,7 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" for="fullName">Full Name *</label>
-          <input type="text" id="fullName" class="form-control" placeholder="e.g. Full Name" required>
+          <input type="text" id="fullName" class="form-control" placeholder="e.g. Full Name (letters only)" required pattern="[A-Za-z\s]{2,60}" title="Full Name must only contain alphabetic letters and spaces (numbers and special characters are not allowed)">
         </div>
         <div class="form-group" id="id-group">
           <label class="form-label" id="id-label" for="idNumber">Student ID (begins with 70572400xxx) *</label>
@@ -143,6 +143,18 @@
       roleSelect.dispatchEvent(new Event('change'));
     }
 
+    // Full Name input restriction: letters and spaces only
+    const fullNameInput = document.getElementById('fullName');
+    fullNameInput.addEventListener('input', () => {
+      if (/[^a-zA-Z\s]/.test(fullNameInput.value)) {
+        fullNameInput.value = fullNameInput.value.replace(/[^a-zA-Z\s]/g, '');
+        alertBox.textContent = 'Only alphabetic letters and spaces are allowed for Full Name. Numbers and special characters are not permitted.';
+        alertBox.style.display = 'flex';
+      } else {
+        alertBox.style.display = 'none';
+      }
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       alertBox.style.display = 'none';
@@ -157,6 +169,14 @@
       const section = document.getElementById('section').value || 'A';
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Full Name Validation: alphabetic characters and spaces only
+      if (!fullName || !/^[a-zA-Z\s]{2,60}$/.test(fullName)) {
+        alertBox.textContent = 'Invalid Full Name: Full name must contain only alphabetic letters and spaces (minimum 2 characters; numbers and special characters are not allowed).';
+        alertBox.style.display = 'flex';
+        fullNameInput.focus();
+        return;
+      }
 
       // Password Validation
       if (password !== confirmPassword) {
