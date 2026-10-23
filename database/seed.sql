@@ -1,6 +1,6 @@
 -- ======================================================
 -- CURRENT LIVE DATABASE EXPORT
--- Generated on 2026-10-22 10:54:26 (Live Auto-Sync)
+-- Generated on 2026-10-23 14:51:00 (Live Auto-Sync)
 -- ======================================================
 
 USE student_performance_db;
@@ -9,9 +9,11 @@ USE student_performance_db;
 INSERT INTO users (id, email, full_name, phone, role, status) VALUES
   (1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', '+91 9876543210', 'ROLE_ADMIN', 'ACTIVE');
 
--- 2. LOGIN AUDIT LOGS TABLE (1 records stored):
+-- 2. LOGIN AUDIT LOGS TABLE (3 records stored):
 INSERT INTO login_audits (id, user_id, email, full_name, role, ip_address, status, remarks, login_time) VALUES
-  (1, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '0:0:0:0:0:0:0:1', 'OTP_CHALLENGED', 'Password verified. Dispatched 6-digit 2FA OTP code to user email.', '2026-10-22T10:53:56.459535');
+  (1, NULL, 'giramoniniharika77@gmail.com', NULL, 'ROLE_STUDENT', '103.177.233.106', 'FAILED_CREDENTIALS', 'Login failed: account does not exist', '2026-10-23T14:00:08.872904'),
+  (2, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '38.183.103.202', 'OTP_CHALLENGED', 'Password verified. Dispatched 6-digit 2FA OTP code to user email.', '2026-10-23T14:50:33.388252'),
+  (3, 1, 'niharikagiramoni7@gmail.com', 'Institutional Administrator', 'ROLE_ADMIN', '38.183.103.202', 'SUCCESS', 'Two-factor authentication successful. User granted active session.', '2026-10-23T14:50:58.310663');
 
 -- 3. DEPARTMENTS TABLE (3 records stored):
 INSERT INTO departments (id, code, name) VALUES
@@ -44,9 +46,8 @@ INSERT INTO faculty (id, user_id, employee_id, department, designation) VALUES
 -- 8. MARKS TABLE (0 records stored):
 -- (empty)
 
--- 9. ASSIGNMENTS TABLE (1 records stored):
-INSERT INTO assignments (id, title, description, subject_id, assigned_date, due_date, max_marks) VALUES
-  (1, 'Database Systems Architecture & Normalization', 'Design ER diagram and normalize to 3NF schema for student registration.', 1, '2026-10-22', '2026-10-30', 50.00);
+-- 9. ASSIGNMENTS TABLE (0 records stored):
+-- (empty)
 
 -- 10. ASSIGNMENT SUBMISSIONS TABLE (0 records stored):
 -- (empty)
